@@ -10,37 +10,59 @@
 
 
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "Token2.hpp"
-#include "memorymap.hpp"
+#include "windows/memorymap.hpp"
 
 
 namespace simlang {
 
-class myLexer2 {
+class MyLexer2 {
    public:
-    myLexer2() : line(0), col(0), length(0) {}
+    MyLexer2() : m_line(1), m_col(0), m_length(0) {}
 
 
-    int LoadFile(const std::string& filename);
+    int loadFile(const std::string& filename);
 
-    void scan(std::string);
-    int ReadToken();
+    int loadFile(MappedFile::Iterator start, MappedFile::Iterator end);
 
-    void Error(const std::string& str);
+    void scan();
+
+    int tokenize(std::string_view lexeme);
+
+    // int readToken();
+
+    void error(const std::string& str);
+
+
+    int checkIfString(std::string_view lexeme);
+    int checkIfPunctuation(std::string_view lexeme, Token& newToken);
+    int checkIfDeclaration(std::string_view lexeme);
+    int checkIfNumber(std::string_view lexeme, Token& newToken);
+    int checkIfSymbol(std::string_view lexeme, Token& newToken);
+
 
    private:
-    std::string filename;
+    std::string m_filename;
     std::vector<char> buffer;
 
-    std::string::iterator curr_file_pointer;
-    std::string::iterator end_file_pointer;
+    void column() { m_col++; }
 
-    int length;
-    int line;
-    int col;
+    void newline() { m_line++; }
+
+    // std::string::iterator curr_file_pointer;
+    // std::string::iterator end_file_pointer;
+
+    int m_length;
+    int m_line;
+    int m_col;
+
+    bool m_mappedFile;
+    MappedFile::Iterator _it;
+    MappedFile::Iterator _end;
 
     std::vector<Token> tokens;
 

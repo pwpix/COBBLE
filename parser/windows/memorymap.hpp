@@ -11,7 +11,6 @@
 #include <cstddef>
 #include <print>
 
-#include "Iterator.hpp"
 
 class MappedFile {
    public:
@@ -63,6 +62,8 @@ class MappedFile {
             --(*this);
             return retval;
         }
+
+        bool operator!() const { return ch == nullptr; }
 
         bool operator==(Iterator other) const { return ch == other.ch; }
         bool operator!=(Iterator other) const { return !(*this == other); }

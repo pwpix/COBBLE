@@ -7,13 +7,14 @@
  */
 
 #include <string>
+#include <vector>
 
 namespace simlang {
 
 
 #define MASTER_LIST     \
     X(ID, "ID")         \
-    X(DECL, "!--")      \
+    X(DECL, "--!")      \
     X(ASSIGN, "=")      \
     X(PLUS, "+")        \
     X(MINUS, "-")       \
@@ -25,7 +26,6 @@ namespace simlang {
     X(NUM, "NUMBER")    \
     X(STR, "STRING")    \
     X(INDENT, "    ")   \
-    X(DEINDENT, "")     \
     X(NEWLINE, "\n")
 
 #define X(Token, String) Token,
@@ -42,5 +42,10 @@ struct Token {
 #define X(Token, String) String,
 inline const char* TOKEN_STRINGS[] = {MASTER_LIST};
 #undef X
+
+inline std::vector<std::string> keywords {
+    "object",
+    "filename"
+};
 
 }  // namespace simlang
