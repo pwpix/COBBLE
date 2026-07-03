@@ -44,6 +44,7 @@ class MyLexer2 {
     int checkIfNumber(std::string_view lexeme, Token& newToken);
     int checkIfSymbol(std::string_view lexeme, Token& newToken);
 
+    const std::vector<Token> getTokens() noexcept { return tokens; }
 
    private:
     std::string m_filename;

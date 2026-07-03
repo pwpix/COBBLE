@@ -23,6 +23,7 @@ int MyLexer2::loadFile(MappedFile::Iterator it, MappedFile::Iterator end) {
 
     _it = it;
     _end = end;
+    m_mappedFile = true;
 
     return 1;
 }
@@ -119,7 +120,7 @@ int MyLexer2::tokenize(std::string_view lexeme) {
     }
 
 
-    newToken.str = std::string(lexeme);
+    newToken.str = lexeme;
     tokens.emplace_back(newToken);
     return 1;
 }
@@ -128,16 +129,29 @@ int MyLexer2::checkIfPunctuation(std::string_view lexeme, Token& newToken) {
     if (lexeme == "=") {
         newToken.type = TokenType::ASSIGN;
         return 1;
-    } else if (lexeme == ":") {
+    }
+
+    else if (lexeme == ",") {
+        newToken.type = TokenType::COMMA;
+        return 1;
+    }
+
+    else if (lexeme == ":") {
         newToken.type = TokenType::COL;
         return 1;
-    } else if (lexeme == ";") {
+    }
+
+    else if (lexeme == ";") {
         newToken.type = TokenType::SEMI;
         return 1;
-    } else if (lexeme == "{") {
+    }
+
+    else if (lexeme == "{") {
         newToken.type = TokenType::LBRACE;
         return 1;
-    } else if (lexeme == "}") {
+    }
+
+    else if (lexeme == "}") {
         newToken.type = TokenType::RBRACE;
         return 1;
     }

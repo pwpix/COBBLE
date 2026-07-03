@@ -7,6 +7,7 @@
  */
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace simlang {
@@ -14,12 +15,13 @@ namespace simlang {
 
 #define MASTER_LIST     \
     X(ID, "ID")         \
-    X(DECL, "--!")      \
+    X(DECL, "!--")      \
     X(ASSIGN, "=")      \
     X(PLUS, "+")        \
     X(MINUS, "-")       \
     X(SEMI, ";")        \
     X(COL, ":")         \
+    X(COMMA, ",")       \
     X(LBRACE, "{")      \
     X(RBRACE, "}")      \
     X(SYMBOL, "SYMBOL") \
@@ -34,7 +36,7 @@ enum class TokenType { MASTER_LIST };
 
 struct Token {
     using Type = TokenType;
-    using Lexeme = std::string;
+    using Lexeme = std::string_view;
     Type type;
     Lexeme str;
 };
@@ -43,9 +45,6 @@ struct Token {
 inline const char* TOKEN_STRINGS[] = {MASTER_LIST};
 #undef X
 
-inline std::vector<std::string> keywords {
-    "object",
-    "filename"
-};
+inline std::vector<std::string> keywords{"object", "filename"};
 
 }  // namespace simlang

@@ -4,6 +4,8 @@
 #include <string_view>
 #include <utility>
 
+#include "Token2.hpp"
+
 
 template <typename T>
 constexpr std::string_view type_name() {
@@ -21,12 +23,9 @@ struct Inspector {
     static void describe(const T& obj) {
         [&obj, ... args = E]() {
             auto print_helper = [](const auto& member) {
-                // Check AT COMPILE TIME if the member is an enum
                 if constexpr (std::is_enum_v<std::decay_t<decltype(member)>>) {
-                    // Safe to use to_underlying here
-                    return std::to_underlying(member);
+                    return simlang::TOKEN_STRINGS[std::to_underlying(member)];
                 } else {
-                    // Pass normal types (int, string, etc.) straight through
                     return member;
                 }
             };
@@ -34,6 +33,7 @@ struct Inspector {
                            type_name<decltype(obj.*args)>(),
                            print_helper(obj.*args))),
              ...);
+            std::println();
         }();
     }
 };
