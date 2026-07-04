@@ -21,7 +21,7 @@ class Node {
 
 class ASTNode {
    public:
-    virtual ~ASTNode() = 0;
+    virtual ~ASTNode();
 };
 
 
