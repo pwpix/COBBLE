@@ -21,7 +21,7 @@ class Node {
 
 class ASTNode {
    public:
-    virtual ~ASTNode();
+    virtual ~ASTNode() = default;
 };
 
 
@@ -34,7 +34,7 @@ class ValuePairNode : public ASTNode {
 class NumberNode : public ASTNode {
    public:
     std::variant<int, float, double, long> value;
-    ~NumberNode() {}
+    ~NumberNode() override {}
 };
 
 class LiteralNode : public ASTNode {
@@ -45,7 +45,7 @@ class LiteralNode : public ASTNode {
 
 class ArrayNode : public ASTNode {
    public:
-    std::vector<std::variant<std::string_view, int, float, double, long>> value;
+    std::vector<std::unique_ptr<ASTNode>> value;
     ~ArrayNode() {}
 };
 
@@ -63,7 +63,7 @@ class FieldAssignmentNode : public ASTNode {
                  std::unique_ptr<ArrayNode>>
         value;
 
-    ~FieldAssignmentNode() {}
+    ~FieldAssignmentNode() override {}
 };
 
 
