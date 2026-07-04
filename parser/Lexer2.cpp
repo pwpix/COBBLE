@@ -48,8 +48,17 @@ void MyLexer2::scan() {
             }
             m_length = 0;
 
+        }
+        // -1234 : MINUS NUM
+        else if (std::isdigit(ch) && m_length == 1) {
+            if (static_cast<unsigned char>(*start) == '-') {
+                res = tokenize(std::string_view(start, start + 1));
+                m_length = 0;
+                start = _it;
+            }
+        }
 
-        } else if (std::isspace(ch)) {
+        else if (std::isspace(ch)) {
             space_count++;
 
             if (space_count == 4) {
@@ -153,6 +162,11 @@ int MyLexer2::checkIfPunctuation(std::string_view lexeme, Token& newToken) {
 
     else if (lexeme == "}") {
         newToken.type = TokenType::RBRACE;
+        return 1;
+    }
+
+    else if (lexeme == "-") {
+        newToken.type = TokenType::MINUS;
         return 1;
     }
     return 0;

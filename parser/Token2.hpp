@@ -6,6 +6,8 @@
  *
  */
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -31,7 +33,7 @@ namespace simlang {
     X(NEWLINE, "\n")
 
 #define X(Token, String) Token,
-enum class TokenType { MASTER_LIST };
+enum class TokenType : uint8_t { MASTER_LIST };
 #undef X
 
 struct Token {
@@ -40,6 +42,16 @@ struct Token {
     Type type;
     Lexeme str;
 };
+
+/*
+struct Token {
+    using Type = TokenType;
+
+    Type type;
+    uint64_t start_offset;
+    size_t length;
+};
+*/
 
 #define X(Token, String) String,
 inline const char* TOKEN_STRINGS[] = {MASTER_LIST};
