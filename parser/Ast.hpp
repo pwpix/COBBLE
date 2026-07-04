@@ -31,7 +31,7 @@ class ValuePairNode : public ASTNode {
     ~ValuePairNode() {}
 };
 
-class NumberNode : ASTNode {
+class NumberNode : public ASTNode {
    public:
     std::variant<int, float, double, long> value;
     ~NumberNode() {}
@@ -76,7 +76,7 @@ class NegativeNode : public ASTNode {
 
 class ObjectNode : public ASTNode {
    public:
-    std::vector<FieldAssignmentNode> fields;
+    std::vector<std::unique_ptr<FieldAssignmentNode>> fields;
     ~ObjectNode() {}
 };
 
