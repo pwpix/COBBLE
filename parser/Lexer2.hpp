@@ -21,38 +21,38 @@
 namespace simlang {
 
 class MyLexer2 {
-   public:
-    MyLexer2() : m_line(1), m_col(0), m_length(0) {}
+    public:
+    MyLexer2 () : m_line (1), m_col (0), m_length (0) {}
 
 
-    int loadFile(const std::string& filename);
+    int loadFile (const std::string& filename);
 
-    int loadFile(MappedFile::Iterator start, MappedFile::Iterator end);
+    int loadFile (MappedFile::Iterator start, MappedFile::Iterator end);
 
-    void scan();
+    void scan ();
 
-    int tokenize(std::string_view lexeme);
+    int tokenize (std::string_view lexeme);
 
     // int readToken();
 
-    void error(const std::string& str);
+    void error (const std::string& str);
 
 
-    int checkIfString(std::string_view lexeme);
-    int checkIfPunctuation(std::string_view lexeme, Token& newToken);
-    int checkIfDeclaration(std::string_view lexeme);
-    int checkIfNumber(std::string_view lexeme, Token& newToken);
-    int checkIfSymbol(std::string_view lexeme, Token& newToken);
+    int checkIfString (std::string_view lexeme);
+    int checkIfPunctuation (std::string_view lexeme, Token& newToken);
+    int checkIfDeclaration (std::string_view lexeme);
+    int checkIfNumber (std::string_view lexeme, Token& newToken);
+    int checkIfSymbol (std::string_view lexeme, Token& newToken);
 
-    const std::vector<Token> getTokens() noexcept { return tokens; }
+    std::vector<Token> getTokens () noexcept { return tokens; }
 
-   private:
+    private:
     std::string m_filename;
     std::vector<char> buffer;
 
-    void column() { m_col++; }
+    void column () { m_col++; }
 
-    void newline() { m_line++; }
+    void newline () { m_line++; }
 
     // std::string::iterator curr_file_pointer;
     // std::string::iterator end_file_pointer;
@@ -70,4 +70,4 @@ class MyLexer2 {
     // bool allocated;
 };
 
-}  // namespace simlang
+} // namespace simlang

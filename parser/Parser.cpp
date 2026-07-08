@@ -16,13 +16,12 @@
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
-
+#include <vector>
 
 namespace simlang {
 
 // template <typename T>
 // concept ValidAstNodeType = std::derived_from<T, ASTNode>;
-
 
 // template <ValidAstNodeType T> std::unique_ptr<T> LogError (const char* str) {
 //     std::println ("Error: {}", str);
@@ -32,23 +31,23 @@ namespace simlang {
 // ----------helpers---------
 
 // https://stackoverflow.com/a/4654718
-bool is_numeric (std::string_view str) {
+bool is_numeric (std::string_view str)
+{
     return !str.empty () &&
-    std::find_if (str.begin (), str.end (),
-    [] (unsigned char c) { return !std::isdigit (c); }) == str.end ();
+    std::find_if (str.begin (), str.end (), [] (unsigned char c) { return !std::isdigit (c); }) == str.end ();
 }
 
-
-static std::nullptr_t LogError (const char* str) {
+static std::nullptr_t LogError (const char* str)
+{
     std::println ("Error: {}", str);
     return nullptr;
 }
 
-
 static std::unique_ptr<IdentifierNode> parseIdentifierExpr (Parser& parser);
 
 // string literal ::= "abc" | "abc123" | "abc123*"
-static std::unique_ptr<LiteralNode> parseLiteralExpr (Parser& parser) {
+static std::unique_ptr<LiteralNode> parseLiteralExpr (Parser& parser)
+{
 
     auto token_type = parser.getTokenType (parser.getCurrentToken ());
 
@@ -63,8 +62,8 @@ static std::unique_ptr<LiteralNode> parseLiteralExpr (Parser& parser) {
 
 // number := 123 | 123.4
 
-static std::unique_ptr<NumberNode> parseNumberExpr (Parser& parser) {
-
+static std::unique_ptr<NumberNode> parseNumberExpr (Parser& parser)
+{
 
     int token_id       = parser.getCurrentToken ();
     std::string_view s = parser.getTokenStr (token_id);
@@ -93,23 +92,23 @@ static std::unique_ptr<NumberNode> parseNumberExpr (Parser& parser) {
         }
     }
 
-
     return result;
 }
 
-static std::unique_ptr<FieldAssignmentNode> parseFieldAssignmentExpr (Parser& parser) {
+
+// Field ::= id : str
+//           id : num
+//           id : array
+//
+static std::unique_ptr<FieldAssignmentNode> parseFieldAssignmentExpr (Parser& parser)
+{
     auto token_id   = parser.getCurrentToken ();
     auto token_type = parser.getTokenType (token_id);
 
     std::unique_ptr<FieldAssignmentNode> result;
     std::unique_ptr<IdentifierNode> id;
 
-
-    if (token_type != TokenType::ID) {
-        return nullptr;
-    }
-    token_id = parser.getNextToken ();
-    id       = parseIdentifierExpr (parser);
+    id = parseIdentifierExpr (parser);
 
     if (id == nullptr) {
         return nullptr;
@@ -124,69 +123,201 @@ static std::unique_ptr<FieldAssignmentNode> parseFieldAssignmentExpr (Parser& pa
     token_id   = parser.getNextToken ();
     token_type = parser.getTokenType (token_id);
 
+
+    // id : str
     std::unique_ptr<ASTNode> s = parseLiteralExpr (parser);
 
-    if (s == nullptr) {
-        s = parseNumberExpr (parser);
-    }
-
-    if (s == nullptr) {
-        std::println ("No value for identifier");
-        return nullptr;
-    }
-
-    if (auto* num_ptr = dynamic_cast<NumberNode*> (s.get ())) {
-        std::unique_ptr<NumberNode> num_node (static_cast<NumberNode*> (s.release ()));
-        result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (num_node));
-    }
-
-    else if (auto* lit_ptr = dynamic_cast<NumberNode*> (s.get ())) {
+    if (s != nullptr) {
         std::unique_ptr<LiteralNode> lit_node (static_cast<LiteralNode*> (s.release ()));
         result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (lit_node));
-    } else {
-        // TODO: LogError
-        std::println ("Error: Identifier expected");
-        return nullptr;
     }
+
+    else {
+        // id : num
+        s = parseNumberExpr (parser);
+        if (s != nullptr) {
+            std::unique_ptr<NumberNode> num_node (static_cast<NumberNode*> (s.release ()));
+            result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (num_node));
+        }
+        else {
+            return LogError ("Error: Expected a literal or number expression for identifier");
+        }
+    }
+
 
     return result;
 }
 
-static std::unique_ptr<ObjectNode> parseObjectExpr (Parser& parser) {
+// Object Literal ::= {
+//                      field
+//                      field
+//                    }
+
+static std::unique_ptr<ObjectNode> parseObjectExpr (Parser& parser)
+{
 
     auto token_id   = parser.getCurrentToken ();
     auto token_type = parser.getTokenType (token_id);
 
     if (token_type != TokenType::LBRACE) {
-        return nullptr;
+        return LogError ("Error: Missing { in object declaration");
     }
 
-    token_id = parser.getNextToken ();
-    return nullptr;
+    std::vector<std::unique_ptr<FieldAssignmentNode>> fields;
+
+    while (true) {
+        token_id   = parser.getNextToken ();
+        token_type = parser.getTokenType (token_id);
+
+        if (token_type == TokenType::RBRACE) {
+            break;
+        }
+
+        std::unique_ptr<FieldAssignmentNode> field = parseFieldAssignmentExpr (parser);
+
+        if (field == nullptr) {
+            return LogError ("Error: expected '}' or a field identifier");
+        }
+        fields.emplace_back (std::move (field));
+    }
+
+
+    token_type = parser.getTokenType (token_id);
+
+    std::unique_ptr<ObjectNode> result = std::make_unique<ObjectNode> (std::move (fields));
+
+    return result;
 }
 
-static std::unique_ptr<IdentifierNode> parseIdentifierExpr (Parser& parser) {
-
+static std::unique_ptr<IdentifierNode> parseIdentifierExpr (Parser& parser)
+{
 
     int token_id    = parser.getCurrentToken ();
     auto token_type = parser.getTokenType (token_id);
+    auto token_line = parser.getTokenLine (token_id);
 
     std::unique_ptr<IdentifierNode> result;
 
     if (token_type != TokenType::ID) {
-        return nullptr;
+        std::string err = std::string ("Error: Line: ") + std::to_string (token_line) + std::string (" Expected Identifier");
+        return LogError (err.c_str ());
+    }
+
+    auto str = parser.getTokenStr (token_id);
+    result   = std::make_unique<IdentifierNode> (str);
+    return result;
+}
+
+
+//
+// decl ::= decl id name { body }
+static std::unique_ptr<DeclarationNode> parseDeclExpr (Parser& parser)
+{
+
+    int token_id    = parser.getCurrentToken ();
+    auto token_type = parser.getTokenType (token_id);
+
+    std::unique_ptr<DeclarationNode> result;
+    std::unique_ptr<LiteralNode> decl_name;
+    std::unique_ptr<IdentifierNode> decl_id;
+    std::unique_ptr<ASTNode> expr;
+
+
+    if (token_type != TokenType::DECL) {
+        return LogError ("Error: Expected declaration");
     }
 
     token_id = parser.getNextToken ();
 
-    std::unique_ptr<LiteralNode> node_name = parseLiteralExpr (parser);
-
-
-    if (node_name == nullptr) {
-        std::println ("Error: missing identifier name");
-    } else {
+    // id
+    decl_id = parseIdentifierExpr (parser);
+    if (!decl_id) {
+        return LogError ("Error: expected identifier after declaration");
     }
-    return nullptr;
+
+    token_id = parser.getNextToken ();
+
+    // name
+    decl_name = parseLiteralExpr (parser);
+    if (!decl_name) {
+        return LogError ("Error: expected a declaration name");
+    }
+
+    std::string_view name_str = decl_name->value;
+
+
+    auto it = SYMBOL_TABLE.find (std::string (decl_name->value));
+    if (it != SYMBOL_TABLE.end ()) {
+        std::string err = std::string ("Error: multiple definitions of ") + std::string (decl_name->value) + std::string (" of type: ") + std::string (decl_id->id);
+        return LogError (err.c_str ());
+    }
+
+    SYMBOL_TABLE[std::string (decl_name->value)] = decl_id.get ();
+
+    // expression/body
+    token_id   = parser.getNextToken ();
+    token_type = parser.getTokenType (token_id);
+
+    // type: '{' object literal
+    if (token_type == TokenType::LBRACE) {
+        expr = parseObjectExpr (parser);
+        if (expr != nullptr) {
+            std::unique_ptr<ObjectNode> obj_expr (static_cast<ObjectNode*> (expr.release ()));
+            result = std::make_unique<DeclarationNode> (std::move (decl_name), std::move (obj_expr));
+        }
+        else {
+            return LogError ("Error: expected a declaration body");
+        }
+    }
+    // type: primitive value
+    else {
+        expr = parseLiteralExpr (parser);
+        if (expr != nullptr) {
+            std::unique_ptr<LiteralNode> lit_expr (static_cast<LiteralNode*> (expr.release ()));
+            result = std::make_unique<DeclarationNode> (std::move (decl_name), std::move (lit_expr));
+        }
+
+        else {
+            expr = parseNumberExpr (parser);
+            if (expr != nullptr) {
+                std::unique_ptr<NumberNode> num_expr (static_cast<NumberNode*> (expr.release ()));
+                result = std::make_unique<DeclarationNode> (std::move (decl_name), std::move (num_expr));
+            }
+
+            else {
+                return LogError ("Error: expected a primitive expression or a declaration body");
+            }
+        }
+    }
+
+    // TODO: advance function
+    // advance to next expression
+    token_id = parser.getNextToken ();
+
+    return result;
+}
+
+
+AST parse (Parser& parser)
+{
+
+    AST ast;
+    auto token_id   = parser.getNextToken ();
+    auto token_type = parser.getTokenType (token_id);
+    while (true) {
+        token_id   = parser.getCurrentToken ();
+        token_type = parser.getTokenType (token_id);
+        // std::println ("{}", static_cast<int> (token_type));
+        if (token_type == TokenType::Token_EOF) {
+            std::println ("End of file");
+            break;
+        }
+        auto node = parseDeclExpr (parser);
+        if (!node)
+            return ast;
+        ast.addNode (std::move (node));
+    }
+    return ast;
 }
 
 
