@@ -17,55 +17,56 @@ namespace simlang {
 
 #define NEWLINE '\r\n'
 
-int MyLexer2::loadFile(MappedFile::Iterator it, MappedFile::Iterator end) {
+int MyLexer2::loadFile (MappedFile::Iterator it, MappedFile::Iterator end) {
     // null check
-    if (!it) return 0;
+    if (!it)
+        return 0;
 
-    _it = it;
-    _end = end;
+    _it          = it;
+    _end         = end;
     m_mappedFile = true;
 
     return 1;
 }
 
-void MyLexer2::scan() {
-    uint8_t space_count{0};
+void MyLexer2::scan () {
+    uint8_t space_count{ 0 };
     MappedFile::Iterator start = _it;
-    int res{-1};
+    int res{ -1 };
     while (_it != _end) {
-        unsigned char ch = static_cast<unsigned char>(*_it);
+        unsigned char ch = static_cast<unsigned char> (*_it);
 
 
         if (ch == '\n') {
-            this->newline();
-            m_col = 0;
+            this->newline ();
+            m_col    = 0;
             m_length = 0;
 
 
         } else if (ch == '\r') {
             if (m_length > 0) {
-                res = tokenize(std::string_view(start, start + m_length));
+                res = tokenize (std::string_view (start, start + m_length));
             }
             m_length = 0;
 
         }
         // -1234 : MINUS NUM
-        else if (std::isdigit(ch) && m_length == 1) {
-            if (static_cast<unsigned char>(*start) == '-') {
-                res = tokenize(std::string_view(start, start + 1));
+        else if (std::isdigit (ch) && m_length == 1) {
+            if (static_cast<unsigned char> (*start) == '-') {
+                res      = tokenize (std::string_view (start, start + 1));
                 m_length = 0;
-                start = _it;
+                start    = _it;
             }
         }
 
-        else if (std::isspace(ch)) {
+        else if (std::isspace (ch)) {
             space_count++;
 
             if (space_count == 4) {
                 // add token indent
             }
             if (m_length > 0) {
-                res = tokenize(std::string_view(start, start + m_length));
+                res = tokenize (std::string_view (start, start + m_length));
             }
             m_length = 0;
 
@@ -82,34 +83,38 @@ void MyLexer2::scan() {
         if (res == 0) {
             break;
         }
-        this->column();
+        this->column ();
         ++_it;
     }
     if (m_length > 0) {
-        res = tokenize(std::string_view(start, start + m_length));
+        res = tokenize (std::string_view (start, start + m_length));
     }
+
+    // token EOF
+    tokens.emplace_back (
+    Token{ .type = TokenType::Token_EOF, .str = std::string_view{ "\0" } });
 }
 
-int MyLexer2::tokenize(std::string_view lexeme) {
+int MyLexer2::tokenize (std::string_view lexeme) {
     Token newToken;
 
-    std::println("{}", lexeme);
+    std::println ("{}", lexeme);
 
-    int res{0};
+    int res{ 0 };
 
-    if (lexeme.starts_with('"') && lexeme.ends_with('"')) {
+    if (lexeme.starts_with ('"') && lexeme.ends_with ('"')) {
         newToken.type = TokenType::STR;
-        res = 1;
+        res           = 1;
     } else if (lexeme == "--!") {
         newToken.type = TokenType::DECL;
-        res = 1;
+        res           = 1;
     } else {
-        res = checkIfPunctuation(lexeme, newToken);
+        res = checkIfPunctuation (lexeme, newToken);
     }
 
 
     if (!res) {
-        res = checkIfNumber(lexeme, newToken);
+        res = checkIfNumber (lexeme, newToken);
     }
 
     if (!res) {
@@ -119,22 +124,22 @@ int MyLexer2::tokenize(std::string_view lexeme) {
         //     lexeme.size() < 50) {
         //     newToken.type = TokenType::ID;
 
-        res = checkIfSymbol(lexeme, newToken);
+        res = checkIfSymbol (lexeme, newToken);
 
         if (!res) {
-            error("Invalid symbol at line:" + std::to_string(m_line) +
-                  " col: " + std::to_string(m_col) + " " + std::string(lexeme));
+            error ("Invalid symbol at line:" + std::to_string (m_line) +
+            " col: " + std::to_string (m_col) + " " + std::string (lexeme));
             return 0;
         }
     }
 
 
     newToken.str = lexeme;
-    tokens.emplace_back(newToken);
+    tokens.emplace_back (newToken);
     return 1;
 }
 
-int MyLexer2::checkIfPunctuation(std::string_view lexeme, Token& newToken) {
+int MyLexer2::checkIfPunctuation (std::string_view lexeme, Token& newToken) {
     if (lexeme == "=") {
         newToken.type = TokenType::ASSIGN;
         return 1;
@@ -172,10 +177,10 @@ int MyLexer2::checkIfPunctuation(std::string_view lexeme, Token& newToken) {
     return 0;
 }
 
-int MyLexer2::checkIfNumber(std::string_view lexeme, Token& newToken) {
+int MyLexer2::checkIfNumber (std::string_view lexeme, Token& newToken) {
     bool found_char;
     for (auto ch : lexeme) {
-        if (!std::isdigit(static_cast<unsigned char>(ch))) {
+        if (!std::isdigit (static_cast<unsigned char> (ch))) {
             found_char = true;
         }
     }
@@ -186,14 +191,13 @@ int MyLexer2::checkIfNumber(std::string_view lexeme, Token& newToken) {
     return 0;
 }
 
-int MyLexer2::checkIfSymbol(std::string_view lexeme, Token& newToken) {
-    bool found_char{false};
-    if (!std::isalpha(static_cast<unsigned char>(lexeme.at(0))) ||
-        lexeme.length() > 50) {
+int MyLexer2::checkIfSymbol (std::string_view lexeme, Token& newToken) {
+    bool found_char{ false };
+    if (!std::isalpha (static_cast<unsigned char> (lexeme.at (0))) || lexeme.length () > 50) {
         return 0;
     }
     for (auto ch : lexeme) {
-        if (!std::isalnum(static_cast<unsigned char>(ch)) && ch != '_') {
+        if (!std::isalnum (static_cast<unsigned char> (ch)) && ch != '_') {
             found_char = true;
             break;
         }
@@ -205,6 +209,6 @@ int MyLexer2::checkIfSymbol(std::string_view lexeme, Token& newToken) {
     return 0;
 }
 
-void MyLexer2::error(const std::string& str) { std::println("{}", str); }
+void MyLexer2::error (const std::string& str) { std::println ("{}", str); }
 
-}  // namespace simlang
+} // namespace simlang
