@@ -27,6 +27,12 @@ class Parser {
 
     size_t getCurrentToken () const noexcept { return currentToken; }
 
+    size_t advance ()
+    {
+        ++currentToken;
+        return currentToken;
+    }
+
     size_t getNextToken ()
     {
         ++currentToken;

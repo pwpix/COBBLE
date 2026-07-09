@@ -44,6 +44,7 @@ struct Token {
     using Lexeme = std::string_view;
     Type type;
     Lexeme str;
+    uint32_t line;
 };
 
 /*

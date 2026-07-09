@@ -120,24 +120,22 @@ static std::unique_ptr<FieldAssignmentNode> parseFieldAssignmentExpr (Parser& pa
         return nullptr;
     }
 
-    token_id   = parser.getNextToken ();
+    token_id   = parser.advance ();
     token_type = parser.getTokenType (token_id);
 
 
     // id : str
-    std::unique_ptr<ASTNode> s = parseLiteralExpr (parser);
+    std::unique_ptr<LiteralNode> lit_expr = parseLiteralExpr (parser);
 
-    if (s != nullptr) {
-        std::unique_ptr<LiteralNode> lit_node (static_cast<LiteralNode*> (s.release ()));
-        result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (lit_node));
+    if (lit_expr != nullptr) {
+        result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (lit_expr));
     }
 
     else {
         // id : num
-        s = parseNumberExpr (parser);
-        if (s != nullptr) {
-            std::unique_ptr<NumberNode> num_node (static_cast<NumberNode*> (s.release ()));
-            result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (num_node));
+        std::unique_ptr<NumberNode> num_expr = parseNumberExpr (parser);
+        if (num_expr != nullptr) {
+            result = std::make_unique<FieldAssignmentNode> (std::move (id), std::move (num_expr));
         }
         else {
             return LogError ("Error: Expected a literal or number expression for identifier");
@@ -166,7 +164,7 @@ static std::unique_ptr<ObjectNode> parseObjectExpr (Parser& parser)
     std::vector<std::unique_ptr<FieldAssignmentNode>> fields;
 
     while (true) {
-        token_id   = parser.getNextToken ();
+        token_id   = parser.advance ();
         token_type = parser.getTokenType (token_id);
 
         if (token_type == TokenType::RBRACE) {
@@ -227,7 +225,7 @@ static std::unique_ptr<DeclarationNode> parseDeclExpr (Parser& parser)
         return LogError ("Error: Expected declaration");
     }
 
-    token_id = parser.getNextToken ();
+    token_id = parser.advance ();
 
     // id
     decl_id = parseIdentifierExpr (parser);
@@ -235,7 +233,7 @@ static std::unique_ptr<DeclarationNode> parseDeclExpr (Parser& parser)
         return LogError ("Error: expected identifier after declaration");
     }
 
-    token_id = parser.getNextToken ();
+    token_id = parser.advance ();
 
     // name
     decl_name = parseLiteralExpr (parser);
@@ -255,32 +253,31 @@ static std::unique_ptr<DeclarationNode> parseDeclExpr (Parser& parser)
     SYMBOL_TABLE[std::string (decl_name->value)] = decl_id.get ();
 
     // expression/body
-    token_id   = parser.getNextToken ();
+    token_id   = parser.advance ();
     token_type = parser.getTokenType (token_id);
 
     // type: '{' object literal
     if (token_type == TokenType::LBRACE) {
-        expr = parseObjectExpr (parser);
-        if (expr != nullptr) {
-            std::unique_ptr<ObjectNode> obj_expr (static_cast<ObjectNode*> (expr.release ()));
+
+        std::unique_ptr<ObjectNode> obj_expr = parseObjectExpr (parser);
+        if (obj_expr != nullptr) {
             result = std::make_unique<DeclarationNode> (std::move (decl_name), std::move (obj_expr));
         }
+
         else {
             return LogError ("Error: expected a declaration body");
         }
     }
     // type: primitive value
     else {
-        expr = parseLiteralExpr (parser);
-        if (expr != nullptr) {
-            std::unique_ptr<LiteralNode> lit_expr (static_cast<LiteralNode*> (expr.release ()));
+        std::unique_ptr<LiteralNode> lit_expr = parseLiteralExpr (parser);
+        if (lit_expr != nullptr) {
             result = std::make_unique<DeclarationNode> (std::move (decl_name), std::move (lit_expr));
         }
 
         else {
-            expr = parseNumberExpr (parser);
-            if (expr != nullptr) {
-                std::unique_ptr<NumberNode> num_expr (static_cast<NumberNode*> (expr.release ()));
+            std::unique_ptr<NumberNode> num_expr = parseNumberExpr (parser);
+            if (num_expr != nullptr) {
                 result = std::make_unique<DeclarationNode> (std::move (decl_name), std::move (num_expr));
             }
 
@@ -292,7 +289,7 @@ static std::unique_ptr<DeclarationNode> parseDeclExpr (Parser& parser)
 
     // TODO: advance function
     // advance to next expression
-    token_id = parser.getNextToken ();
+    token_id = parser.advance ();
 
     return result;
 }
