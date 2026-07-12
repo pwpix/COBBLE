@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(app main.cpp)
 
+if(MSVC)
+    target_compile_options(app PRIVATE "/Zc:preprocessor")
+endif()
+
 # 3. Add compiler options to the target BEFORE loading subdirectories
 target_compile_features(app PRIVATE cxx_std_23)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
