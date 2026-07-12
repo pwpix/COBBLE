@@ -66,12 +66,19 @@ class IdentifierNode : public ASTNode {
     std::string_view id;
 };
 
+class NegativeNode : public ASTNode {
+    public:
+    NegativeNode () = default;
+    explicit NegativeNode (std::unique_ptr<NumberNode> val)
+    : value (std::move (val)) {}
+    std::unique_ptr<NumberNode> value;
+};
 
 class FieldAssignmentNode : public ASTNode {
 
     public:
     using FieldVal =
-    std::variant<std::unique_ptr<NumberNode>, std::unique_ptr<LiteralNode>, std::unique_ptr<ArrayNode>>;
+    std::variant<std::unique_ptr<NumberNode>, std::unique_ptr<LiteralNode>, std::unique_ptr<ArrayNode>, std::unique_ptr<NegativeNode>>;
 
     FieldAssignmentNode () = default;
     explicit FieldAssignmentNode (std::unique_ptr<IdentifierNode> id, FieldVal val)
@@ -82,13 +89,6 @@ class FieldAssignmentNode : public ASTNode {
 };
 
 
-class NegativeNode : public ASTNode {
-    public:
-    NegativeNode () = default;
-    explicit NegativeNode (std::unique_ptr<NumberNode> val)
-    : value (std::move (val)) {}
-    std::unique_ptr<NumberNode> value;
-};
 
 
 class ObjectNode : public ASTNode {

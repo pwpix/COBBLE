@@ -61,6 +61,15 @@ void MyLexer2::scan ()
             }
         }
 
+        else if (ch == ',') {
+            if (m_length > 0) {
+                res = tokenize (
+                std::string_view (start, start + m_length));
+            }
+            res      = tokenize (std::string_view (_it, _it + 1));
+            m_length = 0;
+        }
+
         else if (std::isspace (ch)) {
             space_count++;
 
