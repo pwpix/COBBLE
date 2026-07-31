@@ -1,15 +1,10 @@
 #pragma once
 
-#include <algorithm>
-#include <concepts>
-#include <cstdint>
 #include <memory>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
-
 
 /*
 class Node {
@@ -89,8 +84,6 @@ class FieldAssignmentNode : public ASTNode {
 };
 
 
-
-
 class ObjectNode : public ASTNode {
     public:
     // can be by value to maintain consistency with copyable types
@@ -122,18 +115,18 @@ class DeclarationNode : public ASTNode {
 class AST {
 
     public:
-    AST () : m_root (nullptr) {};
+    AST () {};
 
     void addNode (std::unique_ptr<DeclarationNode> node)
     {
         nodes.emplace_back (std::move (node));
     }
 
-    const ASTNode* getRootNode () const noexcept { return m_root; }
+
+    const auto& getnodes () const noexcept { return nodes; }
 
     private:
-    ASTNode* m_root;
-    std::vector<std::unique_ptr<ASTNode>> nodes;
+    std::vector<std::unique_ptr<DeclarationNode>> nodes;
 };
 
 
@@ -156,3 +149,6 @@ static std::unique_ptr<IdentifierNode> createIdentifierNode ()
 {
     return std::make_unique<IdentifierNode> ();
 }
+
+
+void display_ast (const std::vector<std::unique_ptr<DeclarationNode>>& nodes);

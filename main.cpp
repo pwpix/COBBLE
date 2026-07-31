@@ -1,7 +1,12 @@
 
+#include <concepts>
 #include <cstddef>
 #include <cstring>
+#include <memory>
 #include <print>
+#include <type_traits>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include "Lexer2.hpp"
@@ -34,6 +39,8 @@ int main (int argc, char* argv[])
     simlang::Parser parser (tokens);
 
     AST ast = parse (parser);
+
+    display_ast (ast.getnodes ());
 
 
     std::println ("Ok");
