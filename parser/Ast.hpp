@@ -69,6 +69,7 @@ class NegativeNode : public ASTNode {
     std::unique_ptr<NumberNode> value;
 };
 
+
 class FieldAssignmentNode : public ASTNode {
 
     public:
