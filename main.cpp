@@ -16,6 +16,7 @@
 #include "parser/windows/memorymap.hpp"
 #include "windows/memorymap.hpp"
 
+#include "parser/table_driven/parser3.hpp"
 
 struct A {
     int a;

@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "Token2.hpp"
 #include "stack.hpp"
 #include "table_driven/stack.hpp"
 
@@ -16,7 +17,7 @@ static std::nullptr_t LogError (const char* str);
 
 #define NON_TERMINALS      \
     NT (S, "Start")        \
-    NT (D, "Decl")         \
+    NT (E, "Decl")         \
     NT (F, "Name")         \
     NT (T, "Value")        \
     NT (O, "Object")       \
@@ -36,21 +37,24 @@ inline const char* Non_Terminals_Str[] = { NON_TERMINALS };
 
 // Terminals
 
-enum Terminals : uint16_t {
-    id = NUM_NON_TERMINALS + 1,
-    num,
-    str,
-    equal,
-    comma,
-    lbrace,
-    rbrace,
-    lbrack,
-    rbrack,
-    lparen,
-    rparen,
-    empty,
-    endof
-};
+#define TERMINALS                         \
+    TM (ID = NUM_NON_TERMINALS + 1, "ID") \
+    TM (NUM, "NUM")                       \
+    TM (STR, "STR")                       \
+    TM (EQUAL, "=")                       \
+    TM (COMMA, ",")                       \
+    TM (LBRACE, "{")                      \
+    TM (RBRACE, "}")                      \
+    TM (RBRACK, "[")                      \
+    TM (LBRACK, "]")                      \
+    TM (LPAREN, "(")                      \
+    TM (RPAREN, ")")                      \
+    TM (EMPTY, "empty")                   \
+    TM (ENDOF, "END")
+
+#define TM(id, str) id,
+enum Terminals : uint16_t { TERMINALS };
+#undef TM
 
 
 // rule_X__YY : X is the symbol we have at top of stack, and YY is the lookahead symbol
@@ -74,57 +78,59 @@ enum ProductionRules : uint16_t {
     rule_LB__num,    // LB ::= num
     rule_LE__comma,  // LE ::= , num LE
     rule_LE__rbrack, // LE ::= empty
+    num_production_rules,
 };
-
-std::vector<std::vector<int>> ProductionTable{};
-
-// TODO:
-int parse_table (int top, int lookahead)
-{
-    return -1;
-}
 
 
 // TODO:
 void driver ();
 
+struct Symbol {
+    uint16_t id;
+    bool is_terminal;
 
-/*
-class Parser {
+    bool operator< (const Symbol& other) const
+    {
+        return std::tie (id, is_terminal) < std::tie (other.id, other.is_terminal);
+    }
+    bool operator== (const Symbol& other) const
+    {
+        return id == other.id && is_terminal == other.is_terminal;
+    }
+};
+
+struct ProductionRule {
+    int rule;
+    Symbol lhs;
+    std::vector<Symbol> rhs;
+};
+
+struct LL1ParseTable {
+    std::map<std::pair<Symbol, Symbol>, uint32_t> table;
+
+    void set (Symbol non_terminal, Symbol terminal, uint32_t rule)
+    {
+        table[{ non_terminal, terminal }] = rule;
+    }
+
+    int get_production (Symbol top, Symbol next_input_symbol)
+    {
+        auto it = table.find ({ top, next_input_symbol });
+        if (it == table.end ())
+            return -1;
+        return it->second;
+    }
+};
+
+class Parser3 {
 
     public:
-    explicit Parser (std::vector<Token> tokens_) : tokens (std::move (tokens_)) {}
-
-    TokenType getTokenType (int id)
-    {
-
-        return id >= 0 && id < tokens.size () ? tokens.at (id).type : TokenType::Token_NONE;
-    }
-
-    size_t getCurrentToken () const noexcept { return currentToken; }
-
-    size_t advance ()
-    {
-        ++currentToken;
-        return currentToken;
-    }
-
-    size_t getNextToken ()
-    {
-        ++currentToken;
-        return currentToken;
-    }
-
-    auto getTokenStr (int id) { return tokens.at (id).str; }
-uint32_t getTokenLine (int id) { return tokens.at (id).line; }
+    explicit Parser3 (std::vector<Token> _tokens) : tokens (tokens) {}
+    void parse ();
 
     private:
-    DeclarationNode* parseDeclaration (size_t index);
-    int currentToken{ -1 };
-
     std::vector<Token> tokens;
 };
-*/
 
 
 } // namespace simlang
