@@ -106,7 +106,7 @@ void Lexer::scan ()
 
 int Lexer::tokenize (std::string_view lexeme)
 {
-    Token new_token{ .line = static_cast<uint32_t> (m_line) };
+    Token new_token{ .lexeme = lexeme, .line = static_cast<uint32_t> (m_line) };
 
     int r = 0;
 
@@ -128,6 +128,8 @@ int Lexer::tokenize (std::string_view lexeme)
         " col: " + std::to_string (m_col) + " " + std::string (lexeme));
         return 0;
     }
+
+    m_tokens.emplace_back (new_token);
 
     return 1;
 }
